@@ -5,7 +5,7 @@
 <meta name="shopify-api-key" content="9066a82cbeb9a5311e7b522fc0e204e2" />
 <script src="https://cdn.shopify.com/shopifycloud/app-bridge.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>POS Demo Kit — manage demos</title>
+<title>POS Extension Demo Kit — manage demos</title>
 <style>
   :root { --bg:#f1f1f1; --card:#fff; --ink:#1a1a1a; --sub:#616161; --line:#e1e3e5;
           --accent:#008060; --accent-weak:#e3f1ed; --warn:#8a6116; --warn-bg:#fff6e0;
@@ -103,7 +103,7 @@
 
 <script type="module">
   /* --- inlined lib/wizard-model.mjs --- */
-// POS Demo Kit — wizard model (pure, zero-dependency).
+// POS Extension Demo Kit — wizard model (pure, zero-dependency).
 //
 // Turns the maintainer artefacts (catalog.json = selectable demos, folders may
 // collapse under a "bundle"; library-manifest.json = per-extension compat detail)
@@ -219,7 +219,7 @@ function enabledConfig(model, selectedIds) {
   const el = (id) => document.getElementById(id);
 
   const catalog = {
-  "title": "POS Demo Kit",
+  "title": "POS Extension Demo Kit",
   "subtitle": "Pick POS UI extensions, get them into your demo store fast.",
   "items": [
     {
@@ -247,7 +247,7 @@ function enabledConfig(model, selectedIds) {
         { "type": "product", "label": "Tracked products", "detail": "Inventory tracking enabled on the products you search." }
       ],
       "category": "Inventory",
-      "source": "local:south-se-pos-extensions",
+      "source": "bundled",
       "type": "pos_ui",
       "scopes": ["read_products", "read_inventory", "read_locations"],
       "flags": { "posPro": true, "backend": false, "rust": false }
@@ -262,7 +262,7 @@ function enabledConfig(model, selectedIds) {
         { "type": "config", "label": "Location on device", "detail": "POS device assigned to a location." }
       ],
       "category": "Inventory",
-      "source": "local:south-se-pos-extensions",
+      "source": "bundled",
       "type": "pos_ui",
       "scopes": ["read_products", "write_inventory", "read_inventory", "read_locations"],
       "flags": { "posPro": true, "backend": false, "rust": false }
@@ -277,7 +277,7 @@ function enabledConfig(model, selectedIds) {
         { "type": "inventory", "label": "Source stock", "detail": "On-hand quantity at the origin location for the items being moved." }
       ],
       "category": "Inventory",
-      "source": "local:south-se-pos-extensions",
+      "source": "bundled",
       "type": "pos_ui",
       "scopes": ["read_products", "read_inventory", "read_locations", "write_inventory_transfers", "read_inventory_transfers"],
       "flags": { "posPro": true, "backend": false, "rust": false }
@@ -292,7 +292,7 @@ function enabledConfig(model, selectedIds) {
         { "type": "metaobject", "label": "Location metadata (optional)", "detail": "Reads metaobjects for warehouse ranking/geodata; falls back gracefully if absent." }
       ],
       "category": "Inventory",
-      "source": "local:south-se-pos-extensions",
+      "source": "bundled",
       "type": "pos_ui",
       "scopes": ["read_products", "read_inventory", "read_locations", "write_inventory_transfers", "read_inventory_transfers", "read_metaobjects"],
       "flags": { "posPro": true, "backend": false, "rust": false }
@@ -307,7 +307,7 @@ function enabledConfig(model, selectedIds) {
         { "type": "product", "label": "Sellable products", "detail": "Products with price and stock to build a cart." }
       ],
       "category": "Selling",
-      "source": "local:south-se-pos-extensions",
+      "source": "bundled",
       "type": "pos_ui",
       "scopes": ["read_draft_orders", "write_draft_orders", "read_products", "read_customers", "read_locations"],
       "flags": { "posPro": true, "backend": false, "rust": false }
@@ -338,7 +338,7 @@ function enabledConfig(model, selectedIds) {
         { "type": "config", "label": "Rust toolchain", "detail": "Contains a Rust discount Function — needs rustup to build/deploy." }
       ],
       "category": "Discounts",
-      "source": "local:south-se-pos-extensions",
+      "source": "bundled",
       "type": "bundle",
       "includes": ["pos-birthday-discount", "admin-birthday-discount", "birthday-discount"],
       "scopes": ["read_discounts", "write_discounts", "read_customers", "read_products", "read_locations", "read_metaobjects"],
@@ -354,7 +354,7 @@ function enabledConfig(model, selectedIds) {
         { "type": "config", "label": "Rust toolchain", "detail": "Contains a Rust discount Function — needs rustup to build/deploy." }
       ],
       "category": "Discounts",
-      "source": "local:south-se-pos-extensions",
+      "source": "bundled",
       "type": "bundle",
       "includes": ["pos-shop-discount", "admin-shop-discount", "shop-discount"],
       "scopes": ["read_discounts", "write_discounts", "read_products", "read_locations", "read_metaobjects"],
@@ -370,7 +370,7 @@ function enabledConfig(model, selectedIds) {
         { "type": "config", "label": "Needs Function", "detail": "Won't discount at checkout without the birthday-discount Function (see the full bundle)." }
       ],
       "category": "Discounts",
-      "source": "local:south-se-pos-extensions",
+      "source": "bundled",
       "type": "pos_ui",
       "scopes": ["read_discounts", "write_discounts", "read_customers", "read_products", "read_locations"],
       "flags": { "posPro": true, "backend": false, "rust": false, "partial": true }
@@ -384,7 +384,7 @@ function enabledConfig(model, selectedIds) {
         { "type": "config", "label": "Needs Function", "detail": "Won't discount at checkout without the shop-discount Function (see the full bundle)." }
       ],
       "category": "Discounts",
-      "source": "local:south-se-pos-extensions",
+      "source": "bundled",
       "type": "pos_ui",
       "scopes": ["read_discounts", "write_discounts", "read_products", "read_locations"],
       "flags": { "posPro": true, "backend": false, "rust": false, "partial": true }
@@ -878,7 +878,7 @@ function enabledConfig(model, selectedIds) {
       "displayName": "Birthday Discount (POS only)",
       "blurb": "POS UI only. Writes discount config; needs the Function bundle to actually apply the discount.",
       "category": "Discounts",
-      "source": "local:south-se-pos-extensions",
+      "source": "bundled",
       "catalogScopes": [
         "read_discounts",
         "write_discounts",
@@ -932,7 +932,7 @@ function enabledConfig(model, selectedIds) {
       "displayName": "Inventory Adjustment",
       "blurb": "Adjust available inventory at the current POS location with Admin-matching reasons.",
       "category": "Inventory",
-      "source": "local:south-se-pos-extensions",
+      "source": "bundled",
       "catalogScopes": [
         "read_products",
         "write_inventory",
@@ -987,7 +987,7 @@ function enabledConfig(model, selectedIds) {
       "displayName": "Inventory Transfer",
       "blurb": "Initiate an inventory transfer between locations directly from POS.",
       "category": "Inventory",
-      "source": "local:south-se-pos-extensions",
+      "source": "bundled",
       "catalogScopes": [
         "read_products",
         "read_inventory",
@@ -1045,7 +1045,7 @@ function enabledConfig(model, selectedIds) {
       "displayName": "Restock Request",
       "blurb": "Request a restock from the nearest warehouse location that can fulfil the full request.",
       "category": "Inventory",
-      "source": "local:south-se-pos-extensions",
+      "source": "bundled",
       "catalogScopes": [
         "read_products",
         "read_inventory",
@@ -1147,7 +1147,7 @@ function enabledConfig(model, selectedIds) {
       "displayName": "Shop Discount (POS only)",
       "blurb": "POS UI only. Writes discount config; needs the Function bundle to actually apply the discount.",
       "category": "Discounts",
-      "source": "local:south-se-pos-extensions",
+      "source": "bundled",
       "catalogScopes": [
         "read_discounts",
         "write_discounts",
@@ -1200,7 +1200,7 @@ function enabledConfig(model, selectedIds) {
       "displayName": "Stock Lookup",
       "blurb": "Look up on-hand / available inventory for any product across locations from POS.",
       "category": "Inventory",
-      "source": "local:south-se-pos-extensions",
+      "source": "bundled",
       "catalogScopes": [
         "read_products",
         "read_inventory",
@@ -1314,7 +1314,7 @@ function enabledConfig(model, selectedIds) {
       "displayName": "Reserve Cart",
       "blurb": "Reserve the POS cart as a draft order and load reserved carts back into POS.",
       "category": "Selling",
-      "source": "local:south-se-pos-extensions",
+      "source": "bundled",
       "catalogScopes": [
         "read_draft_orders",
         "write_draft_orders",

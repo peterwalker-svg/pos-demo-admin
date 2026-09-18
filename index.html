@@ -1,0 +1,1539 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="shopify-api-key" content="9066a82cbeb9a5311e7b522fc0e204e2" />
+<script src="https://cdn.shopify.com/shopifycloud/app-bridge.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>POS Demo Kit — manage demos</title>
+<style>
+  :root { --bg:#f1f1f1; --card:#fff; --ink:#1a1a1a; --sub:#616161; --line:#e1e3e5;
+          --accent:#008060; --accent-weak:#e3f1ed; --warn:#8a6116; --warn-bg:#fff6e0;
+          --off:#c9cccf; --danger:#8e1f0b; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+         color:var(--ink); background:var(--bg); }
+  header { padding:20px 28px; background:var(--card); border-bottom:1px solid var(--line);
+           display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap; }
+  header h1 { margin:0; font-size:19px; }
+  header p { margin:4px 0 0; color:var(--sub); max-width:620px; }
+  .toolbar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .btn { font:inherit; padding:7px 14px; border-radius:8px; border:1px solid var(--line);
+         background:#fff; cursor:pointer; }
+  .btn.primary { background:var(--accent); color:#fff; border-color:var(--accent); }
+  .btn.small { padding:4px 10px; font-size:13px; }
+  .store input { padding:7px 10px; border:1px solid var(--line); border-radius:8px; font:inherit; width:180px; }
+  .status { font-size:12px; color:var(--sub); }
+  .wrap { padding:20px 28px 40px; max-width:1040px; margin:0 auto; }
+  .summary { display:flex; gap:20px; flex-wrap:wrap; margin-bottom:18px; }
+  .stat { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px 16px; }
+  .stat b { font-size:20px; color:var(--accent); }
+  .stat span { display:block; color:var(--sub); font-size:12px; }
+  .cat { margin-bottom:22px; }
+  .cat > h2 { font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--sub); margin:0 0 10px; }
+  .demo { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 18px; margin-bottom:12px; }
+  .demo.off { opacity:.72; }
+  .drow { display:flex; gap:16px; align-items:flex-start; }
+  .dmain { flex:1; min-width:0; }
+  .dname { font-weight:650; font-size:15px; }
+  .ddesc { color:var(--sub); margin-top:3px; }
+  .badges { margin-top:8px; display:flex; gap:6px; flex-wrap:wrap; }
+  .badge { font-size:11px; padding:1px 8px; border-radius:20px; background:var(--accent-weak); color:var(--accent); }
+  .badge.warn { background:var(--warn-bg); color:var(--warn); }
+  .badge.neutral { background:#eef0f2; color:#454f5b; }
+  /* toggle */
+  .toggle { position:relative; width:46px; height:26px; flex:0 0 auto; cursor:pointer; }
+  .toggle input { opacity:0; width:0; height:0; }
+  .track { position:absolute; inset:0; background:var(--off); border-radius:26px; transition:.15s; }
+  .track::before { content:""; position:absolute; height:20px; width:20px; left:3px; top:3px;
+                   background:#fff; border-radius:50%; transition:.15s; }
+  .toggle input:checked + .track { background:var(--accent); }
+  .toggle input:checked + .track::before { transform:translateX(20px); }
+  .setup { margin-top:12px; border-top:1px dashed var(--line); padding-top:10px; }
+  .setup summary { cursor:pointer; font-size:13px; color:var(--sub); font-weight:600; }
+  .setup ul { margin:8px 0 0; padding:0; list-style:none; }
+  .setup li { display:flex; gap:10px; padding:5px 0; align-items:flex-start; }
+  .stype { flex:0 0 auto; font-size:10px; text-transform:uppercase; letter-spacing:.04em;
+           padding:2px 7px; border-radius:6px; background:#eef0f2; color:#454f5b; min-width:78px; text-align:center; }
+  .stype.metafield,.stype.metaobject { background:#ece3ff; color:#5b3f99; }
+  .stype.product,.stype.inventory { background:#e3eeff; color:#1f5199; }
+  .stype.customer { background:#ffe9f0; color:#99385b; }
+  .stype.config { background:var(--warn-bg); color:var(--warn); }
+  .sitem b { font-weight:600; } .sitem span { color:var(--sub); }
+  .actions { margin-top:12px; display:flex; gap:8px; flex-wrap:wrap; }
+  .actions a { color:var(--accent); text-decoration:none; font-size:13px; padding:4px 10px;
+               border:1px solid var(--accent-weak); border-radius:8px; }
+  .actions a:hover { background:var(--accent-weak); }
+  .actions a.disabled { color:var(--sub); border-color:var(--line); pointer-events:none; }
+  footer { padding:0 28px 40px; color:var(--sub); font-size:12px; max-width:1040px; margin:0 auto; }
+  code { background:#eef0f2; padding:1px 5px; border-radius:4px; }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Manage your POS demos</h1>
+    <p>Turn each demo extension on or off, see what it does, and what data your store needs for it to shine.
+       Enabled tiles get a one-tap “Add to POS” link.</p>
+  </div>
+  <div class="toolbar">
+    <span class="store"><input id="store" placeholder="store handle" /></span>
+    <button class="btn" id="allOn">Enable all</button>
+    <button class="btn" id="allOff">Disable all</button>
+    <button class="btn primary" id="save">Save</button>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="summary">
+    <div class="stat"><b id="nOn">0</b><span>enabled</span></div>
+    <div class="stat"><b id="nTiles">0</b><span>tiles to add in POS</span></div>
+    <div class="stat"><b id="nScopes">0</b><span>permissions in use</span></div>
+    <div class="stat" style="flex:1"><span id="statusLine" class="status">Standalone preview — toggles saved to this browser.</span></div>
+  </div>
+  <div id="cats"></div>
+</div>
+
+<footer>
+  Embedded App Home. Reads <code>catalog.json</code> + <code>library-manifest.json</code> via <code>lib/wizard-model.mjs</code>.
+  When embedded in Admin it persists the enabled set to an app metaobject (<code>$app:pos_demo_config</code>) via the Direct
+  Admin API and each extension self-gates on it; standalone it uses <code>localStorage</code>. “Add to POS” uses each
+  extension’s registration UUID (App Transparency deep link).
+</footer>
+
+<script type="module">
+  /* --- inlined lib/wizard-model.mjs --- */
+// POS Demo Kit — wizard model (pure, zero-dependency).
+//
+// Turns the maintainer artefacts (catalog.json = selectable demos, folders may
+// collapse under a "bundle"; library-manifest.json = per-extension compat detail)
+// into the MERCHANT-facing plan the embedded Admin wizard renders:
+//   - selectable demo items grouped by category
+//   - per selection: the scope set the app will hold, which extensions need a
+//     Smart Grid tile added, which run automatically, which need a backend
+//   - the exact "Add to POS" deep link (mirrors the shipped App-Transparency
+//     editor deep link) so tile placement is one tap.
+//
+// The embedded Polaris/Remix wizard imports THIS module; the static prototype
+// under wizard/ imports a browser copy of the same logic.
+
+// Build a merchant-facing model from catalog + manifest.
+function buildWizardModel(catalog, manifest) {
+  const folders = Object.fromEntries((manifest.extensions || []).map((e) => [e.name, e]));
+  const items = (catalog.items || []).map((it) => {
+    const folderIds = it.type === "bundle" && Array.isArray(it.includes) ? it.includes : [it.id];
+    const rows = folderIds.map((f) => folders[f]).filter(Boolean);
+    const tileFolders = rows.filter((r) => (r.tileTargets || []).length > 0).map((r) => r.name);
+    const autoActiveFolders = rows
+      .filter((r) => (r.tileTargets || []).length === 0 && (r.targets || []).some((t) => t.startsWith("pos.")))
+      .map((r) => r.name);
+    const functionFolders = rows
+      .filter((r) => (r.targets || []).some((t) => t.endsWith(".run")) || (r.targets || []).some((t) => t.startsWith("admin.")))
+      .map((r) => r.name);
+    return {
+      id: it.id,
+      name: it.name || it.id,
+      blurb: it.blurb || "",
+      description: it.description || it.blurb || "",
+      setup: Array.isArray(it.setup) ? it.setup : [],
+      category: it.category || "Other",
+      type: it.type || "pos_ui",
+      scopes: (it.scopes || []).slice().sort(),
+      posPro: !!(it.flags && it.flags.posPro),
+      backend: !!(it.flags && it.flags.backend),
+      rust: !!(it.flags && it.flags.rust),
+      offline: !!(it.flags && it.flags.offline),
+      partial: !!(it.flags && it.flags.partial),
+      folders: rows.map((r) => r.name),
+      tileFolders,
+      autoActiveFolders,
+      functionFolders,
+    };
+  });
+  const categories = [...new Set(items.map((i) => i.category))].sort();
+  return { items, categories };
+}
+
+// Compute the plan for a chosen set of demo item ids.
+function selectionPlan(model, selectedIds) {
+  const chosen = model.items.filter((i) => selectedIds.includes(i.id));
+  const scopes = new Set();
+  const tileSteps = [];       // { itemId, itemName, folder }  — merchant must add each
+  const autoActive = [];      // folders that render once installed (no tile)
+  const backendNeeded = [];   // items needing a hosted backend to fully work
+  const functions = [];       // discount/admin function folders
+  const warnings = [];
+
+  for (const it of chosen) {
+    it.scopes.forEach((s) => scopes.add(s));
+    it.tileFolders.forEach((f) => tileSteps.push({ itemId: it.id, itemName: it.name, folder: f }));
+    it.autoActiveFolders.forEach((f) => autoActive.push(f));
+    it.functionFolders.forEach((f) => functions.push(f));
+    if (it.backend) backendNeeded.push(it.id);
+    if (it.rust) warnings.push(`${it.name}: includes a Rust Function (build needs rustup + wasm32).`);
+    if (it.partial) warnings.push(`${it.name}: POS-only piece — needs its Function bundle to fully apply.`);
+  }
+
+  return {
+    itemCount: chosen.length,
+    scopes: [...scopes].sort(),
+    tileSteps,
+    autoActive: [...new Set(autoActive)],
+    functions: [...new Set(functions)],
+    backendNeeded: [...new Set(backendNeeded)],
+    warnings,
+  };
+}
+
+// The one-tap "Add to POS" deep link — mirrors the shipped App-Transparency
+// editor_subpath in core (pos_ui_extension_adapter.rb): drops the merchant into
+// the Smart Grid editor pre-loaded to create a tile for THIS extension.
+//   registrationUuid is assigned by Shopify at deploy; the embedded app resolves
+//   it at runtime (handle -> installed extension). storeHandle omitted -> path only.
+function smartGridAddLink({ storeHandle, registrationUuid, posChannelHandle = "point-of-sale-channel" } = {}) {
+  const path = `/apps/${posChannelHandle}/editor` +
+    `?currentEditor=pointOfSale&mode=sections&section=smartGrid` +
+    `&createSmartGridTile=uiExtension&appExtensionRegistrationUuid=${encodeURIComponent(registrationUuid || "")}`;
+  const url = storeHandle ? `https://admin.shopify.com/store/${storeHandle}${path}` : path;
+  return { path, url };
+}
+
+// The per-shop "enabled set" the wizard persists (metaobject) and each extension
+// self-gates on. Deterministic + minimal.
+function enabledConfig(model, selectedIds) {
+  return {
+    version: 1,
+    enabled: model.items.filter((i) => selectedIds.includes(i.id)).flatMap((i) => i.folders).sort(),
+    updatedAt: null, // stamped by the app at write time
+  };
+}
+
+/* --- end inlined model --- */
+
+  const STORE_KEY = "pos-demo-kit:store";
+  const ENABLED_KEY = "pos-demo-kit:enabled";
+
+  // ---- host detection: App Bridge (embedded) vs standalone preview ----------
+  const params = new URLSearchParams(location.search);
+  const embedded = !!(params.get("host") || window.shopify);
+  const el = (id) => document.getElementById(id);
+
+  const catalog = {
+  "title": "POS Demo Kit",
+  "subtitle": "Pick POS UI extensions, get them into your demo store fast.",
+  "items": [
+    {
+      "id": "offline-cycle-count",
+      "name": "Offline Cycle Count",
+      "blurb": "Fully-offline inventory quick/cycle counts with robust sync. Works with no internet.",
+      "description": "Count stock on the shop floor with zero internet — scan or tap to tally, then sync safely when back online. Great for showing resilient in-store operations.",
+      "setup": [
+        { "type": "product", "label": "Tracked products", "detail": "Products with 'track quantity' on and stock at the POS location." },
+        { "type": "inventory", "label": "Location stock", "detail": "On-hand quantities set at the current POS location so counts have something to reconcile." }
+      ],
+      "category": "Inventory",
+      "source": "github:peterwalker-svg/pos-offline-counts",
+      "type": "pos_ui",
+      "scopes": ["read_products", "write_inventory", "read_locations"],
+      "flags": { "posPro": true, "backend": false, "rust": false, "offline": true }
+    },
+    {
+      "id": "pos-stock-lookup",
+      "name": "Stock Lookup",
+      "blurb": "Look up on-hand / available inventory for any product across locations from POS.",
+      "description": "Search any product from POS and see on-hand / available inventory across every location — answer 'have we got it in the back or another store?' instantly.",
+      "setup": [
+        { "type": "inventory", "label": "Multi-location stock", "detail": "At least two locations with on-hand quantities so cross-location lookup is meaningful." },
+        { "type": "product", "label": "Tracked products", "detail": "Inventory tracking enabled on the products you search." }
+      ],
+      "category": "Inventory",
+      "source": "local:south-se-pos-extensions",
+      "type": "pos_ui",
+      "scopes": ["read_products", "read_inventory", "read_locations"],
+      "flags": { "posPro": true, "backend": false, "rust": false }
+    },
+    {
+      "id": "pos-inventory-adjustment",
+      "name": "Inventory Adjustment",
+      "blurb": "Adjust available inventory at the current POS location with Admin-matching reasons.",
+      "description": "Adjust available stock at the current location right from POS, using the same reason codes as Admin (received, damaged, count, etc.).",
+      "setup": [
+        { "type": "product", "label": "Tracked products", "detail": "Products with inventory tracked at the POS location." },
+        { "type": "config", "label": "Location on device", "detail": "POS device assigned to a location." }
+      ],
+      "category": "Inventory",
+      "source": "local:south-se-pos-extensions",
+      "type": "pos_ui",
+      "scopes": ["read_products", "write_inventory", "read_inventory", "read_locations"],
+      "flags": { "posPro": true, "backend": false, "rust": false }
+    },
+    {
+      "id": "pos-inventory-transfer",
+      "name": "Inventory Transfer",
+      "blurb": "Initiate an inventory transfer between locations directly from POS.",
+      "description": "Kick off a stock transfer between two locations without leaving POS — pick items, quantities and destination on the shop floor.",
+      "setup": [
+        { "type": "config", "label": "Two+ locations", "detail": "At least two active locations to transfer between." },
+        { "type": "inventory", "label": "Source stock", "detail": "On-hand quantity at the origin location for the items being moved." }
+      ],
+      "category": "Inventory",
+      "source": "local:south-se-pos-extensions",
+      "type": "pos_ui",
+      "scopes": ["read_products", "read_inventory", "read_locations", "write_inventory_transfers", "read_inventory_transfers"],
+      "flags": { "posPro": true, "backend": false, "rust": false }
+    },
+    {
+      "id": "pos-restock",
+      "name": "Restock Request",
+      "blurb": "Request a restock from the nearest warehouse location that can fulfil the full request.",
+      "description": "Request a restock and the extension finds the nearest warehouse that can fulfil the whole request, then raises a transfer.",
+      "setup": [
+        { "type": "config", "label": "Warehouse location(s)", "detail": "One or more fulfilment/warehouse locations with stock." },
+        { "type": "metaobject", "label": "Location metadata (optional)", "detail": "Reads metaobjects for warehouse ranking/geodata; falls back gracefully if absent." }
+      ],
+      "category": "Inventory",
+      "source": "local:south-se-pos-extensions",
+      "type": "pos_ui",
+      "scopes": ["read_products", "read_inventory", "read_locations", "write_inventory_transfers", "read_inventory_transfers", "read_metaobjects"],
+      "flags": { "posPro": true, "backend": false, "rust": false }
+    },
+    {
+      "id": "reserve-cart",
+      "name": "Reserve Cart",
+      "blurb": "Reserve the POS cart as a draft order and load reserved carts back into POS.",
+      "description": "Save an in-progress POS cart as a named reservation (draft order) and pull it back onto any register later — perfect for 'hold this for me' moments.",
+      "setup": [
+        { "type": "customer", "label": "Customers", "detail": "A few customer records to attach reservations to." },
+        { "type": "product", "label": "Sellable products", "detail": "Products with price and stock to build a cart." }
+      ],
+      "category": "Selling",
+      "source": "local:south-se-pos-extensions",
+      "type": "pos_ui",
+      "scopes": ["read_draft_orders", "write_draft_orders", "read_products", "read_customers", "read_locations"],
+      "flags": { "posPro": true, "backend": false, "rust": false }
+    },
+    {
+      "id": "pos-serial-capture",
+      "name": "Serial Capture",
+      "blurb": "Capture serial numbers for serialised products at POS checkout.",
+      "description": "Prompt staff to scan or type serial numbers for serialised items during checkout, storing them against the product/order for warranty and traceability.",
+      "setup": [
+        { "type": "metafield", "label": "Serial metafield", "detail": "A product/variant metafield (e.g. custom.serial_numbers, list.single_line_text_field) to store captured serials." },
+        { "type": "product", "label": "Serialised products", "detail": "Products flagged as requiring a serial (via tag or metafield)." }
+      ],
+      "category": "Selling",
+      "source": "github:peterwalker-svg/pos-serial-capture",
+      "type": "pos_ui",
+      "scopes": ["read_products", "write_products"],
+      "flags": { "posPro": true, "backend": false, "rust": false }
+    },
+    {
+      "id": "bundle-birthday-discount",
+      "name": "Birthday Discount (full)",
+      "blurb": "Create location-scoped birthday discounts from POS. Bundle: POS UI + Admin settings + discount Function.",
+      "description": "End-to-end birthday discount: staff create a location-scoped birthday offer from POS, an Admin settings page configures it, and a discount Function applies it at checkout.",
+      "setup": [
+        { "type": "metafield", "label": "Birthday metafield", "detail": "Customer metafield holding date of birth (e.g. facts.birth_date, date)." },
+        { "type": "customer", "label": "Customers with birthdays", "detail": "Customers with the birthday metafield populated so the discount can match." },
+        { "type": "config", "label": "Rust toolchain", "detail": "Contains a Rust discount Function — needs rustup to build/deploy." }
+      ],
+      "category": "Discounts",
+      "source": "local:south-se-pos-extensions",
+      "type": "bundle",
+      "includes": ["pos-birthday-discount", "admin-birthday-discount", "birthday-discount"],
+      "scopes": ["read_discounts", "write_discounts", "read_customers", "read_products", "read_locations", "read_metaobjects"],
+      "flags": { "posPro": true, "backend": false, "rust": true }
+    },
+    {
+      "id": "bundle-shop-discount",
+      "name": "Shop Discount (full)",
+      "blurb": "Create location-scoped shop discounts from POS. Bundle: POS UI + Admin settings + discount Function.",
+      "description": "End-to-end shop discount: create a location-scoped store discount from POS, configure it in Admin, and apply it via a discount Function at checkout.",
+      "setup": [
+        { "type": "product", "label": "Discountable products", "detail": "Products/collections the discount can target." },
+        { "type": "config", "label": "Rust toolchain", "detail": "Contains a Rust discount Function — needs rustup to build/deploy." }
+      ],
+      "category": "Discounts",
+      "source": "local:south-se-pos-extensions",
+      "type": "bundle",
+      "includes": ["pos-shop-discount", "admin-shop-discount", "shop-discount"],
+      "scopes": ["read_discounts", "write_discounts", "read_products", "read_locations", "read_metaobjects"],
+      "flags": { "posPro": true, "backend": false, "rust": true }
+    },
+    {
+      "id": "pos-birthday-discount",
+      "name": "Birthday Discount (POS only)",
+      "blurb": "POS UI only. Writes discount config; needs the Function bundle to actually apply the discount.",
+      "description": "POS-side only: writes the birthday-discount configuration. Pair with the Function bundle for the discount to actually apply at checkout.",
+      "setup": [
+        { "type": "metafield", "label": "Birthday metafield", "detail": "Customer birthday metafield to match on." },
+        { "type": "config", "label": "Needs Function", "detail": "Won't discount at checkout without the birthday-discount Function (see the full bundle)." }
+      ],
+      "category": "Discounts",
+      "source": "local:south-se-pos-extensions",
+      "type": "pos_ui",
+      "scopes": ["read_discounts", "write_discounts", "read_customers", "read_products", "read_locations"],
+      "flags": { "posPro": true, "backend": false, "rust": false, "partial": true }
+    },
+    {
+      "id": "pos-shop-discount",
+      "name": "Shop Discount (POS only)",
+      "blurb": "POS UI only. Writes discount config; needs the Function bundle to actually apply the discount.",
+      "description": "POS-side only: writes the shop-discount configuration. Pair with the Function bundle for the discount to actually apply at checkout.",
+      "setup": [
+        { "type": "config", "label": "Needs Function", "detail": "Won't discount at checkout without the shop-discount Function (see the full bundle)." }
+      ],
+      "category": "Discounts",
+      "source": "local:south-se-pos-extensions",
+      "type": "pos_ui",
+      "scopes": ["read_discounts", "write_discounts", "read_products", "read_locations"],
+      "flags": { "posPro": true, "backend": false, "rust": false, "partial": true }
+    },
+    {
+      "id": "draft-order-complete",
+      "name": "Complete Draft Orders",
+      "blurb": "Browse and complete draft orders at the register (+ create fulfilment orders).",
+      "description": "Browse open draft orders at the register, complete them as a sale, and create fulfilment orders — closes the loop on quotes and phone/online holds in-store.",
+      "setup": [
+        { "type": "config", "label": "Open draft orders", "detail": "Some open draft orders in the store to browse and complete." },
+        { "type": "customer", "label": "Customers", "detail": "Customers attached to drafts for a realistic flow." }
+      ],
+      "category": "Selling",
+      "source": "github:peterwalker-svg/draft-order-pos-complete",
+      "type": "bundle",
+      "includes": ["complete-draft-order", "create-fulfilment-order"],
+      "scopes": ["write_products", "read_draft_orders", "write_draft_orders", "read_orders", "read_customers", "read_locations"],
+      "flags": { "posPro": true, "backend": true, "rust": false }
+    },
+    {
+      "id": "customer-outreach",
+      "name": "Customer Outreach",
+      "blurb": "Preact POS UI extension for customer outreach.",
+      "description": "Clienteling: surface a customer's context at POS and trigger outreach (follow-ups, thank-yous) so associates can build relationships.",
+      "setup": [
+        { "type": "customer", "label": "Customers with history", "detail": "Customers with orders / marketing consent to reach out to." },
+        { "type": "metaobject", "label": "Outreach templates (optional)", "detail": "Reads metaobjects for message templates if present." }
+      ],
+      "category": "Clienteling",
+      "source": "github:peterwalker-svg/pos-ui",
+      "type": "pos_ui",
+      "scopes": ["write_products", "read_customers", "read_orders", "read_inventory", "read_metaobjects"],
+      "flags": { "posPro": true, "backend": true, "rust": false }
+    },
+    {
+      "id": "part-lookup",
+      "name": "Part Lookup",
+      "blurb": "Preact POS UI extension for parts lookup.",
+      "description": "Clienteling/parts: look up parts or compatible items for a product at POS — useful for spares, accessories and fitment lookups.",
+      "setup": [
+        { "type": "metaobject", "label": "Parts data", "detail": "Metaobjects mapping products to parts / compatibility." },
+        { "type": "product", "label": "Products with parts", "detail": "Products linked to the parts metaobjects." }
+      ],
+      "category": "Clienteling",
+      "source": "github:peterwalker-svg/pos-ui",
+      "type": "pos_ui",
+      "scopes": ["write_products", "read_customers", "read_orders", "read_inventory", "read_metaobjects"],
+      "flags": { "posPro": true, "backend": true, "rust": false }
+    },
+    {
+      "id": "purchase-history-recommendations",
+      "name": "Purchase History Recommendations",
+      "blurb": "React POS UI extension surfacing recommendations from purchase history.",
+      "description": "Show tailored product recommendations at POS based on the customer's purchase history — drive attach and cross-sell at the counter.",
+      "setup": [
+        { "type": "customer", "label": "Customers with orders", "detail": "Customers who have prior orders to derive recommendations from." },
+        { "type": "product", "label": "Related products", "detail": "A catalog with enough breadth for meaningful recommendations." }
+      ],
+      "category": "Clienteling",
+      "source": "github:peterwalker-svg/pos-ui",
+      "type": "pos_ui",
+      "scopes": ["write_products", "read_customers", "read_orders", "read_inventory", "read_metaobjects"],
+      "flags": { "posPro": true, "backend": true, "rust": false }
+    }
+  ]
+};
+  const manifest = {
+  "generatedAt": "2026-09-15T12:28:57.973Z",
+  "extensions": [
+    {
+      "name": "admin-birthday-discount",
+      "handle": "admin-birthday-discount",
+      "origin": null,
+      "apiVersion": "2026-01",
+      "type": "ui_extension",
+      "targets": [
+        "admin.discount-details.function-settings.render"
+      ],
+      "tileTargets": [],
+      "smartGridOnly": false,
+      "sdk": {
+        "declared": "~2026.01.0",
+        "expected": "~2026.1.0",
+        "mismatch": false
+      },
+      "apiAccess": {
+        "used": false,
+        "declared": false,
+        "needsFix": false
+      },
+      "inferredScopes": [
+        "read_locations",
+        "read_products"
+      ],
+      "scopeEvidence": {
+        "read_products": "products",
+        "read_locations": "location"
+      },
+      "backend": false,
+      "backendReasons": [],
+      "errors": [],
+      "warnings": [],
+      "repairs": []
+    },
+    {
+      "name": "admin-shop-discount",
+      "handle": "admin-shop-discount",
+      "origin": null,
+      "apiVersion": "2026-01",
+      "type": "ui_extension",
+      "targets": [
+        "admin.discount-details.function-settings.render"
+      ],
+      "tileTargets": [],
+      "smartGridOnly": false,
+      "sdk": {
+        "declared": "~2026.01.0",
+        "expected": "~2026.1.0",
+        "mismatch": false
+      },
+      "apiAccess": {
+        "used": false,
+        "declared": false,
+        "needsFix": false
+      },
+      "inferredScopes": [
+        "read_locations",
+        "read_products"
+      ],
+      "scopeEvidence": {
+        "read_products": "products",
+        "read_locations": "location"
+      },
+      "backend": false,
+      "backendReasons": [],
+      "errors": [],
+      "warnings": [],
+      "repairs": []
+    },
+    {
+      "name": "birthday-discount",
+      "handle": "birthday-discount",
+      "origin": null,
+      "apiVersion": "2026-07",
+      "type": "function",
+      "targets": [
+        "cart.lines.discounts.generate.run",
+        "cart.delivery-options.discounts.generate.run"
+      ],
+      "tileTargets": [],
+      "smartGridOnly": false,
+      "sdk": {
+        "declared": null,
+        "expected": "~2026.7.0",
+        "mismatch": false
+      },
+      "apiAccess": {
+        "used": false,
+        "declared": false,
+        "needsFix": false
+      },
+      "inferredScopes": [
+        "read_customers",
+        "read_discounts",
+        "read_locations",
+        "read_metaobjects",
+        "read_orders",
+        "read_products"
+      ],
+      "scopeEvidence": {
+        "read_products": "products",
+        "read_customers": "customers",
+        "read_orders": "orders",
+        "read_metaobjects": "metaobject",
+        "read_discounts": "discountNode",
+        "read_locations": "location"
+      },
+      "backend": false,
+      "backendReasons": [],
+      "errors": [],
+      "warnings": [],
+      "repairs": []
+    },
+    {
+      "name": "complete-draft-order",
+      "handle": "complete-draft-order",
+      "origin": null,
+      "apiVersion": "2026-01",
+      "type": "ui_extension",
+      "targets": [
+        "pos.home.tile.render",
+        "pos.home.modal.render"
+      ],
+      "tileTargets": [
+        "pos.home.tile.render",
+        "pos.home.modal.render"
+      ],
+      "smartGridOnly": true,
+      "sdk": {
+        "declared": "2025.10.x",
+        "expected": "~2026.1.0",
+        "mismatch": true
+      },
+      "apiAccess": {
+        "used": true,
+        "declared": false,
+        "needsFix": true
+      },
+      "inferredScopes": [
+        "read_customers",
+        "read_draft_orders",
+        "read_orders",
+        "read_products",
+        "write_draft_orders"
+      ],
+      "scopeEvidence": {
+        "write_draft_orders": "draftOrderUpdate",
+        "read_draft_orders": "draftOrders",
+        "read_products": "product",
+        "read_customers": "customer",
+        "read_orders": "orders"
+      },
+      "backend": false,
+      "backendReasons": [],
+      "errors": [],
+      "warnings": [
+        "SDK 2025.10.x (2025.10) != api_version 2026-01 (expects 2026.1); can pin to ~2026.1.0",
+        "uses Direct API but [extensions.capabilities] api_access is not declared; can add it"
+      ],
+      "repairs": []
+    },
+    {
+      "name": "create-fulfilment-order",
+      "handle": "create-fulfilment-order",
+      "origin": null,
+      "apiVersion": "2026-01",
+      "type": "ui_extension",
+      "targets": [
+        "pos.home.tile.render",
+        "pos.home.modal.render"
+      ],
+      "tileTargets": [
+        "pos.home.tile.render",
+        "pos.home.modal.render"
+      ],
+      "smartGridOnly": true,
+      "sdk": {
+        "declared": "2025.10.x",
+        "expected": "~2026.1.0",
+        "mismatch": true
+      },
+      "apiAccess": {
+        "used": true,
+        "declared": false,
+        "needsFix": true
+      },
+      "inferredScopes": [
+        "read_customers",
+        "read_draft_orders",
+        "read_locations",
+        "read_orders",
+        "read_products",
+        "write_draft_orders"
+      ],
+      "scopeEvidence": {
+        "write_draft_orders": "draftOrderCreate",
+        "read_draft_orders": "draftOrder",
+        "read_products": "productVariants",
+        "read_customers": "CustomerSearch",
+        "read_orders": "order",
+        "read_locations": "Locations"
+      },
+      "backend": false,
+      "backendReasons": [],
+      "errors": [],
+      "warnings": [
+        "SDK 2025.10.x (2025.10) != api_version 2026-01 (expects 2026.1); can pin to ~2026.1.0",
+        "uses Direct API but [extensions.capabilities] api_access is not declared; can add it"
+      ],
+      "repairs": []
+    },
+    {
+      "name": "customer-outreach",
+      "handle": "customer-outreach",
+      "origin": null,
+      "apiVersion": "2025-10",
+      "type": "ui_extension",
+      "targets": [
+        "pos.home.tile.render",
+        "pos.home.modal.render"
+      ],
+      "tileTargets": [
+        "pos.home.tile.render",
+        "pos.home.modal.render"
+      ],
+      "smartGridOnly": true,
+      "sdk": {
+        "declared": "2025.10.x",
+        "expected": "~2025.10.0",
+        "mismatch": false
+      },
+      "apiAccess": {
+        "used": true,
+        "declared": false,
+        "needsFix": true
+      },
+      "inferredScopes": [
+        "read_customers",
+        "read_locations",
+        "read_orders"
+      ],
+      "scopeEvidence": {
+        "read_customers": "customers",
+        "read_orders": "orders",
+        "read_locations": "location"
+      },
+      "backend": false,
+      "backendReasons": [],
+      "errors": [],
+      "warnings": [
+        "uses Direct API but [extensions.capabilities] api_access is not declared; can add it"
+      ],
+      "repairs": [],
+      "displayName": "Customer Outreach",
+      "blurb": "Preact POS UI extension for customer outreach.",
+      "category": "Clienteling",
+      "source": "github:peterwalker-svg/pos-ui",
+      "catalogScopes": [
+        "write_products",
+        "read_customers",
+        "read_orders",
+        "read_inventory",
+        "read_metaobjects"
+      ]
+    },
+    {
+      "name": "offline-cycle-count",
+      "handle": "offline-cycle-count",
+      "origin": null,
+      "apiVersion": "2026-04",
+      "type": "ui_extension",
+      "targets": [
+        "pos.home.tile.render",
+        "pos.home.modal.render"
+      ],
+      "tileTargets": [
+        "pos.home.tile.render",
+        "pos.home.modal.render"
+      ],
+      "smartGridOnly": true,
+      "sdk": {
+        "declared": "2026.4.4",
+        "expected": "~2026.4.0",
+        "mismatch": false
+      },
+      "apiAccess": {
+        "used": true,
+        "declared": false,
+        "needsFix": true
+      },
+      "inferredScopes": [
+        "read_inventory",
+        "read_locations",
+        "read_orders",
+        "read_products",
+        "write_inventory"
+      ],
+      "scopeEvidence": {
+        "write_inventory": "inventorySetQuantities",
+        "read_inventory": "inventoryItem",
+        "read_products": "product",
+        "read_orders": "order",
+        "read_locations": "location"
+      },
+      "backend": false,
+      "backendReasons": [],
+      "errors": [],
+      "warnings": [
+        "uses Direct API but [extensions.capabilities] api_access is not declared; can add it"
+      ],
+      "repairs": [],
+      "displayName": "Offline Cycle Count",
+      "blurb": "Fully-offline inventory quick/cycle counts with robust sync. Works with no internet.",
+      "category": "Inventory",
+      "source": "github:peterwalker-svg/pos-offline-counts",
+      "catalogScopes": [
+        "read_products",
+        "write_inventory",
+        "read_locations"
+      ]
+    },
+    {
+      "name": "part-lookup",
+      "handle": "partlookup",
+      "origin": null,
+      "apiVersion": "2025-10",
+      "type": "ui_extension",
+      "targets": [
+        "pos.home.tile.render",
+        "pos.home.modal.render"
+      ],
+      "tileTargets": [
+        "pos.home.tile.render",
+        "pos.home.modal.render"
+      ],
+      "smartGridOnly": true,
+      "sdk": {
+        "declared": "2025.10.x",
+        "expected": "~2025.10.0",
+        "mismatch": false
+      },
+      "apiAccess": {
+        "used": true,
+        "declared": false,
+        "needsFix": true
+      },
+      "inferredScopes": [
+        "read_inventory",
+        "read_locations",
+        "read_products"
+      ],
+      "scopeEvidence": {
+        "read_inventory": "inventoryItem",
+        "read_products": "product",
+        "read_locations": "location"
+      },
+      "backend": false,
+      "backendReasons": [],
+      "errors": [],
+      "warnings": [
+        "uses Direct API but [extensions.capabilities] api_access is not declared; can add it"
+      ],
+      "repairs": [],
+      "displayName": "Part Lookup",
+      "blurb": "Preact POS UI extension for parts lookup.",
+      "category": "Clienteling",
+      "source": "github:peterwalker-svg/pos-ui",
+      "catalogScopes": [
+        "write_products",
+        "read_customers",
+        "read_orders",
+        "read_inventory",
+        "read_metaobjects"
+      ]
+    },
+    {
+      "name": "pos-birthday-discount",
+      "handle": "pos-birthday-discount",
+      "origin": null,
+      "apiVersion": "2025-10",
+      "type": "ui_extension",
+      "targets": [
+        "pos.home.tile.render",
+        "pos.home.modal.render"
+      ],
+      "tileTargets": [
+        "pos.home.tile.render",
+        "pos.home.modal.render"
+      ],
+      "smartGridOnly": true,
+      "sdk": {
+        "declared": "~2025.10.0",
+        "expected": "~2025.10.0",
+        "mismatch": false
+      },
+      "apiAccess": {
+        "used": true,
+        "declared": true,
+        "needsFix": false
+      },
+      "inferredScopes": [
+        "read_customers",
+        "read_discounts",
+        "read_locations",
+        "read_products",
+        "write_discounts"
+      ],
+      "scopeEvidence": {
+        "read_products": "products",
+        "read_customers": "customer",
+        "write_discounts": "discountAutomaticAppUpdate",
+        "read_discounts": "discountNodes",
+        "read_locations": "locations"
+      },
+      "backend": false,
+      "backendReasons": [],
+      "errors": [],
+      "warnings": [],
+      "repairs": [],
+      "displayName": "Birthday Discount (POS only)",
+      "blurb": "POS UI only. Writes discount config; needs the Function bundle to actually apply the discount.",
+      "category": "Discounts",
+      "source": "local:south-se-pos-extensions",
+      "catalogScopes": [
+        "read_discounts",
+        "write_discounts",
+        "read_customers",
+        "read_products",
+        "read_locations"
+      ]
+    },
+    {
+      "name": "pos-inventory-adjustment",
+      "handle": "pos-inventory-adjustment",
+      "origin": null,
+      "apiVersion": "2025-10",
+      "type": "ui_extension",
+      "targets": [
+        "pos.home.tile.render",
+        "pos.home.modal.render"
+      ],
+      "tileTargets": [
+        "pos.home.tile.render",
+        "pos.home.modal.render"
+      ],
+      "smartGridOnly": true,
+      "sdk": {
+        "declared": "~2025.10.0",
+        "expected": "~2025.10.0",
+        "mismatch": false
+      },
+      "apiAccess": {
+        "used": true,
+        "declared": true,
+        "needsFix": false
+      },
+      "inferredScopes": [
+        "read_inventory",
+        "read_locations",
+        "read_products",
+        "write_inventory"
+      ],
+      "scopeEvidence": {
+        "write_inventory": "inventorySetQuantities",
+        "read_inventory": "inventoryItem",
+        "read_products": "productVariants",
+        "read_locations": "locations"
+      },
+      "backend": false,
+      "backendReasons": [],
+      "errors": [],
+      "warnings": [],
+      "repairs": [],
+      "displayName": "Inventory Adjustment",
+      "blurb": "Adjust available inventory at the current POS location with Admin-matching reasons.",
+      "category": "Inventory",
+      "source": "local:south-se-pos-extensions",
+      "catalogScopes": [
+        "read_products",
+        "write_inventory",
+        "read_inventory",
+        "read_locations"
+      ]
+    },
+    {
+      "name": "pos-inventory-transfer",
+      "handle": "pos-inventory-transfer",
+      "origin": null,
+      "apiVersion": "2025-10",
+      "type": "ui_extension",
+      "targets": [
+        "pos.home.tile.render",
+        "pos.home.modal.render"
+      ],
+      "tileTargets": [
+        "pos.home.tile.render",
+        "pos.home.modal.render"
+      ],
+      "smartGridOnly": true,
+      "sdk": {
+        "declared": "~2025.10.0",
+        "expected": "~2025.10.0",
+        "mismatch": false
+      },
+      "apiAccess": {
+        "used": true,
+        "declared": true,
+        "needsFix": false
+      },
+      "inferredScopes": [
+        "read_inventory",
+        "read_inventory_transfers",
+        "read_locations",
+        "read_products",
+        "write_inventory_transfers"
+      ],
+      "scopeEvidence": {
+        "read_inventory": "inventoryItem",
+        "write_inventory_transfers": "inventoryTransferCreate",
+        "read_inventory_transfers": "inventoryTransfer",
+        "read_products": "productVariants",
+        "read_locations": "locations"
+      },
+      "backend": false,
+      "backendReasons": [],
+      "errors": [],
+      "warnings": [],
+      "repairs": [],
+      "displayName": "Inventory Transfer",
+      "blurb": "Initiate an inventory transfer between locations directly from POS.",
+      "category": "Inventory",
+      "source": "local:south-se-pos-extensions",
+      "catalogScopes": [
+        "read_products",
+        "read_inventory",
+        "read_locations",
+        "write_inventory_transfers",
+        "read_inventory_transfers"
+      ]
+    },
+    {
+      "name": "pos-restock",
+      "handle": "pos-restock",
+      "origin": null,
+      "apiVersion": "2025-10",
+      "type": "ui_extension",
+      "targets": [
+        "pos.home.tile.render",
+        "pos.home.modal.render"
+      ],
+      "tileTargets": [
+        "pos.home.tile.render",
+        "pos.home.modal.render"
+      ],
+      "smartGridOnly": true,
+      "sdk": {
+        "declared": "~2025.10.0",
+        "expected": "~2025.10.0",
+        "mismatch": false
+      },
+      "apiAccess": {
+        "used": true,
+        "declared": true,
+        "needsFix": false
+      },
+      "inferredScopes": [
+        "read_inventory",
+        "read_inventory_transfers",
+        "read_locations",
+        "read_orders",
+        "read_products",
+        "write_inventory_transfers"
+      ],
+      "scopeEvidence": {
+        "read_inventory": "inventoryItem",
+        "write_inventory_transfers": "RestockTransferCreate",
+        "read_inventory_transfers": "inventoryTransfers",
+        "read_products": "productVariants",
+        "read_orders": "order",
+        "read_locations": "locations"
+      },
+      "backend": false,
+      "backendReasons": [],
+      "errors": [],
+      "warnings": [],
+      "repairs": [],
+      "displayName": "Restock Request",
+      "blurb": "Request a restock from the nearest warehouse location that can fulfil the full request.",
+      "category": "Inventory",
+      "source": "local:south-se-pos-extensions",
+      "catalogScopes": [
+        "read_products",
+        "read_inventory",
+        "read_locations",
+        "write_inventory_transfers",
+        "read_inventory_transfers",
+        "read_metaobjects"
+      ]
+    },
+    {
+      "name": "pos-serial-capture",
+      "handle": "pos-serial-capture",
+      "origin": null,
+      "apiVersion": "2026-01",
+      "type": "ui_extension",
+      "targets": [
+        "pos.home.tile.render",
+        "pos.home.modal.render"
+      ],
+      "tileTargets": [
+        "pos.home.tile.render",
+        "pos.home.modal.render"
+      ],
+      "smartGridOnly": true,
+      "sdk": {
+        "declared": "^2026.1.1",
+        "expected": "~2026.1.0",
+        "mismatch": false
+      },
+      "apiAccess": {
+        "used": true,
+        "declared": false,
+        "needsFix": true
+      },
+      "inferredScopes": [
+        "read_products"
+      ],
+      "scopeEvidence": {
+        "read_products": "product"
+      },
+      "backend": false,
+      "backendReasons": [],
+      "errors": [],
+      "warnings": [
+        "uses Direct API but [extensions.capabilities] api_access is not declared; can add it"
+      ],
+      "repairs": [],
+      "displayName": "Serial Capture",
+      "blurb": "Capture serial numbers for serialised products at POS checkout.",
+      "category": "Selling",
+      "source": "github:peterwalker-svg/pos-serial-capture",
+      "catalogScopes": [
+        "read_products",
+        "write_products"
+      ]
+    },
+    {
+      "name": "pos-shop-discount",
+      "handle": "pos-shop-discount",
+      "origin": null,
+      "apiVersion": "2025-10",
+      "type": "ui_extension",
+      "targets": [
+        "pos.home.tile.render",
+        "pos.home.modal.render"
+      ],
+      "tileTargets": [
+        "pos.home.tile.render",
+        "pos.home.modal.render"
+      ],
+      "smartGridOnly": true,
+      "sdk": {
+        "declared": "~2025.10.0",
+        "expected": "~2025.10.0",
+        "mismatch": false
+      },
+      "apiAccess": {
+        "used": true,
+        "declared": true,
+        "needsFix": false
+      },
+      "inferredScopes": [
+        "read_discounts",
+        "read_locations",
+        "read_products",
+        "write_discounts"
+      ],
+      "scopeEvidence": {
+        "read_products": "products",
+        "write_discounts": "discountAutomaticAppUpdate",
+        "read_discounts": "discountNodes",
+        "read_locations": "locations"
+      },
+      "backend": false,
+      "backendReasons": [],
+      "errors": [],
+      "warnings": [],
+      "repairs": [],
+      "displayName": "Shop Discount (POS only)",
+      "blurb": "POS UI only. Writes discount config; needs the Function bundle to actually apply the discount.",
+      "category": "Discounts",
+      "source": "local:south-se-pos-extensions",
+      "catalogScopes": [
+        "read_discounts",
+        "write_discounts",
+        "read_products",
+        "read_locations"
+      ]
+    },
+    {
+      "name": "pos-stock-lookup",
+      "handle": "pos-stock-lookup",
+      "origin": null,
+      "apiVersion": "2025-10",
+      "type": "ui_extension",
+      "targets": [
+        "pos.home.tile.render",
+        "pos.home.modal.render"
+      ],
+      "tileTargets": [
+        "pos.home.tile.render",
+        "pos.home.modal.render"
+      ],
+      "smartGridOnly": true,
+      "sdk": {
+        "declared": "~2025.10.0",
+        "expected": "~2025.10.0",
+        "mismatch": false
+      },
+      "apiAccess": {
+        "used": true,
+        "declared": true,
+        "needsFix": false
+      },
+      "inferredScopes": [
+        "read_inventory",
+        "read_locations",
+        "read_metaobjects",
+        "read_products"
+      ],
+      "scopeEvidence": {
+        "read_inventory": "inventoryItem",
+        "read_products": "productVariants",
+        "read_metaobjects": "metaobjects",
+        "read_locations": "locations"
+      },
+      "backend": false,
+      "backendReasons": [],
+      "errors": [],
+      "warnings": [],
+      "repairs": [],
+      "displayName": "Stock Lookup",
+      "blurb": "Look up on-hand / available inventory for any product across locations from POS.",
+      "category": "Inventory",
+      "source": "local:south-se-pos-extensions",
+      "catalogScopes": [
+        "read_products",
+        "read_inventory",
+        "read_locations"
+      ]
+    },
+    {
+      "name": "purchase-history-recommendations",
+      "handle": "purchasehistoryrecommendations",
+      "origin": null,
+      "apiVersion": "unstable",
+      "type": "ui_extension",
+      "targets": [
+        "pos.home.tile.render",
+        "pos.home.modal.render"
+      ],
+      "tileTargets": [
+        "pos.home.tile.render",
+        "pos.home.modal.render"
+      ],
+      "smartGridOnly": true,
+      "sdk": {
+        "declared": "2025.4.x",
+        "expected": null,
+        "mismatch": false
+      },
+      "apiAccess": {
+        "used": true,
+        "declared": false,
+        "needsFix": true
+      },
+      "inferredScopes": [
+        "read_customers",
+        "read_inventory",
+        "read_locations",
+        "read_orders",
+        "read_products"
+      ],
+      "scopeEvidence": {
+        "read_inventory": "inventoryLevels",
+        "read_products": "product",
+        "read_customers": "customer",
+        "read_orders": "orders",
+        "read_locations": "location"
+      },
+      "backend": false,
+      "backendReasons": [],
+      "errors": [],
+      "warnings": [
+        "uses Direct API but [extensions.capabilities] api_access is not declared; can add it"
+      ],
+      "repairs": [],
+      "displayName": "Purchase History Recommendations",
+      "blurb": "React POS UI extension surfacing recommendations from purchase history.",
+      "category": "Clienteling",
+      "source": "github:peterwalker-svg/pos-ui",
+      "catalogScopes": [
+        "write_products",
+        "read_customers",
+        "read_orders",
+        "read_inventory",
+        "read_metaobjects"
+      ]
+    },
+    {
+      "name": "reserve-cart",
+      "handle": "reserve-cart",
+      "origin": null,
+      "apiVersion": "2025-10",
+      "type": "ui_extension",
+      "targets": [
+        "pos.home.tile.render",
+        "pos.home.modal.render"
+      ],
+      "tileTargets": [
+        "pos.home.tile.render",
+        "pos.home.modal.render"
+      ],
+      "smartGridOnly": true,
+      "sdk": {
+        "declared": "~2025.10.0",
+        "expected": "~2025.10.0",
+        "mismatch": false
+      },
+      "apiAccess": {
+        "used": true,
+        "declared": true,
+        "needsFix": false
+      },
+      "inferredScopes": [
+        "read_customers",
+        "read_draft_orders",
+        "read_locations",
+        "read_orders",
+        "read_products",
+        "write_draft_orders"
+      ],
+      "scopeEvidence": {
+        "write_draft_orders": "ReserveCart",
+        "read_draft_orders": "draftOrder",
+        "read_products": "products",
+        "read_customers": "customer",
+        "read_orders": "order",
+        "read_locations": "location"
+      },
+      "backend": false,
+      "backendReasons": [],
+      "errors": [],
+      "warnings": [],
+      "repairs": [],
+      "displayName": "Reserve Cart",
+      "blurb": "Reserve the POS cart as a draft order and load reserved carts back into POS.",
+      "category": "Selling",
+      "source": "local:south-se-pos-extensions",
+      "catalogScopes": [
+        "read_draft_orders",
+        "write_draft_orders",
+        "read_products",
+        "read_customers",
+        "read_locations"
+      ]
+    },
+    {
+      "name": "shop-discount",
+      "handle": "shop-discount",
+      "origin": null,
+      "apiVersion": "2026-07",
+      "type": "function",
+      "targets": [
+        "cart.lines.discounts.generate.run",
+        "cart.delivery-options.discounts.generate.run"
+      ],
+      "tileTargets": [],
+      "smartGridOnly": false,
+      "sdk": {
+        "declared": null,
+        "expected": "~2026.7.0",
+        "mismatch": false
+      },
+      "apiAccess": {
+        "used": false,
+        "declared": false,
+        "needsFix": false
+      },
+      "inferredScopes": [
+        "read_customers",
+        "read_discounts",
+        "read_locations",
+        "read_metaobjects",
+        "read_orders",
+        "read_products"
+      ],
+      "scopeEvidence": {
+        "read_products": "products",
+        "read_customers": "customers",
+        "read_orders": "orders",
+        "read_metaobjects": "metaobject",
+        "read_discounts": "discountNode",
+        "read_locations": "location"
+      },
+      "backend": false,
+      "backendReasons": [],
+      "errors": [],
+      "warnings": [],
+      "repairs": []
+    }
+  ]
+};
+  const model = buildWizardModel(catalog, manifest);
+
+  // registration UUIDs (extension folder -> uuid) resolved at runtime when
+  // embedded; standalone falls back to the folder name as a placeholder.
+  const uuidByFolder = await resolveRegistrationUuids();
+
+  // ---- persistence layer ----------------------------------------------------
+  async function loadEnabled() {
+    if (embedded) {
+      try { return await readConfigMetaobject(); } catch (e) { console.warn("metaobject read failed", e); }
+    }
+    try { return new Set(JSON.parse(localStorage.getItem(ENABLED_KEY) || "[]")); }
+    catch { return new Set(); }
+  }
+  async function saveEnabled(ids) {
+    const cfg = enabledConfig(model, [...ids]);
+    cfg.updatedAt = new Date().toISOString();
+    if (embedded) {
+      try { await writeConfigMetaobject(cfg); setStatus("Saved to store · " + cfg.updatedAt); return; }
+      catch (e) { setStatus("Save failed: " + e.message); return; }
+    }
+    localStorage.setItem(ENABLED_KEY, JSON.stringify([...ids]));
+    setStatus("Saved to this browser · " + cfg.updatedAt);
+  }
+
+  const enabled = await loadEnabled();
+  const storeInput = el("store");
+  storeInput.value = localStorage.getItem(STORE_KEY) || (embedded ? (window.shopify?.config?.shop?.split(".")[0] || "") : "");
+  storeInput.addEventListener("input", () => { localStorage.setItem(STORE_KEY, storeInput.value.trim()); renderSummary(); });
+
+  function setStatus(t) { el("statusLine").textContent = t; }
+  if (embedded) setStatus("Embedded in Admin — toggles saved to the store.");
+
+  // ---- render ---------------------------------------------------------------
+  const catsEl = el("cats");
+  function typeBadges(it) {
+    const b = [];
+    if (it.posPro) b.push('<span class="badge neutral">POS Pro</span>');
+    if (it.tileFolders.length) b.push(`<span class="badge">${it.tileFolders.length > 1 ? it.tileFolders.length + " tiles" : "tile"}</span>`);
+    if (it.autoActiveFolders.length) b.push('<span class="badge">auto</span>');
+    if (it.functionFolders.length) b.push('<span class="badge">function</span>');
+    if (it.offline) b.push('<span class="badge">offline</span>');
+    if (it.backend) b.push('<span class="badge warn">needs backend</span>');
+    if (it.rust) b.push('<span class="badge warn">rust</span>');
+    if (it.partial) b.push('<span class="badge warn">partial</span>');
+    return b.join("");
+  }
+  function setupHtml(it) {
+    if (!it.setup.length) return "";
+    const rows = it.setup.map((s) =>
+      `<li class="sitem"><span class="stype ${s.type}">${s.type}</span>
+        <span><b>${s.label}</b> — ${s.detail}</span></li>`).join("");
+    return `<details class="setup"><summary>Setup needed (${it.setup.length})</summary><ul>${rows}</ul></details>`;
+  }
+  function actionsHtml(it) {
+    const store = storeInput.value.trim();
+    if (!it.tileFolders.length) return "";
+    const links = it.tileFolders.map((f) => {
+      const { url } = smartGridAddLink({ storeHandle: store || undefined, registrationUuid: uuidByFolder[f] || f });
+      const cls = enabled.has(it.id) ? "" : "disabled";
+      return `<a class="${cls}" href="${url}" target="_blank" rel="noopener">Add “${it.name}” to POS</a>`;
+    });
+    return `<div class="actions">${links.join("")}</div>`;
+  }
+
+  for (const cat of model.categories) {
+    const items = model.items.filter((i) => i.category === cat);
+    const sec = document.createElement("div");
+    sec.className = "cat";
+    sec.innerHTML = `<h2>${cat}</h2>`;
+    for (const it of items) {
+      const card = document.createElement("div");
+      card.className = "demo" + (enabled.has(it.id) ? "" : " off");
+      card.dataset.id = it.id;
+      card.innerHTML = `
+        <div class="drow">
+          <div class="dmain">
+            <div class="dname">${it.name}</div>
+            <div class="ddesc">${it.description}</div>
+            <div class="badges">${typeBadges(it)}</div>
+          </div>
+          <label class="toggle"><input type="checkbox" ${enabled.has(it.id) ? "checked" : ""}><span class="track"></span></label>
+        </div>
+        ${setupHtml(it)}
+        <div class="actionsSlot">${actionsHtml(it)}</div>`;
+      card.querySelector("input").addEventListener("change", (e) => {
+        e.target.checked ? enabled.add(it.id) : enabled.delete(it.id);
+        card.classList.toggle("off", !e.target.checked);
+        card.querySelector(".actionsSlot").innerHTML = actionsHtml(it);
+        renderSummary();
+      });
+      sec.appendChild(card);
+    }
+    catsEl.appendChild(sec);
+  }
+
+  function renderSummary() {
+    const ids = [...enabled];
+    const plan = selectionPlan(model, ids);
+    el("nOn").textContent = plan.itemCount;
+    el("nTiles").textContent = plan.tileSteps.length;
+    el("nScopes").textContent = plan.scopes.length;
+    // refresh add-to-POS links (store handle may have changed)
+    for (const card of catsEl.querySelectorAll(".demo")) {
+      const it = model.items.find((i) => i.id === card.dataset.id);
+      card.querySelector(".actionsSlot").innerHTML = actionsHtml(it);
+    }
+  }
+
+  el("allOn").addEventListener("click", () => bulk(true));
+  el("allOff").addEventListener("click", () => bulk(false));
+  function bulk(on) {
+    for (const card of catsEl.querySelectorAll(".demo")) {
+      const cb = card.querySelector("input");
+      cb.checked = on;
+      const id = card.dataset.id;
+      on ? enabled.add(id) : enabled.delete(id);
+      card.classList.toggle("off", !on);
+    }
+    renderSummary();
+  }
+  el("save").addEventListener("click", () => saveEnabled(enabled));
+
+  renderSummary();
+
+  // ---- Admin Direct-API helpers (used only when embedded) -------------------
+  // App Bridge injects a session token; the embedded app calls the Admin
+  // GraphQL API directly (shopify.dev "Direct API access"). Config lives in an
+  // app-owned metaobject so it's per-shop and readable by each extension.
+  async function adminGraphQL(query, variables) {
+    const token = await window.shopify.idToken();
+    const res = await fetch("shopify:admin/api/graphql.json", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+      body: JSON.stringify({ query, variables }),
+    });
+    const json = await res.json();
+    if (json.errors) throw new Error(JSON.stringify(json.errors));
+    return json.data;
+  }
+  async function readConfigMetaobject() {
+    const d = await adminGraphQL(`query {
+      metaobjectByHandle(handle:{type:"pos_demo_config", handle:"default"}) {
+        field(key:"enabled") { value }
+      }
+    }`);
+    const raw = d?.metaobjectByHandle?.field?.value;
+    return new Set(raw ? JSON.parse(raw) : []);
+  }
+  async function writeConfigMetaobject(cfg) {
+    await adminGraphQL(`mutation ($handle:MetaobjectHandleInput!, $fields:[MetaobjectFieldInput!]!) {
+      metaobjectUpsert(handle:$handle, metaobject:{ fields:$fields }) {
+        userErrors { field message }
+      }
+    }`, {
+      handle: { type: "pos_demo_config", handle: "default" },
+      fields: [{ key: "enabled", value: JSON.stringify(cfg.enabled) },
+               { key: "updated_at", value: cfg.updatedAt }],
+    });
+  }
+  async function resolveRegistrationUuids() {
+    // Embedded: query the app's own extension registrations to map folder->uuid.
+    // (Requires the app to expose this; until wired, fall back to folder name.)
+    return {};
+  }
+</script>
+</body>
+</html>

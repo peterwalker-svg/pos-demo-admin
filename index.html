@@ -1386,11 +1386,11 @@ function enabledConfig(model, selectedIds) {
   async function saveEnabled(ids) {
     const cfg = enabledConfig(model, [...ids]);
     cfg.updatedAt = new Date().toISOString();
+    localStorage.setItem(ENABLED_KEY, JSON.stringify([...ids])); // always cache locally
     if (embedded) {
       try { await writeConfigMetaobject(cfg); setStatus("Saved to store · " + cfg.updatedAt); return; }
-      catch (e) { setStatus("Save failed: " + e.message); return; }
+      catch (e) { setStatus("Saved locally (store save needs metaobject scopes) · " + cfg.updatedAt); return; }
     }
-    localStorage.setItem(ENABLED_KEY, JSON.stringify([...ids]));
     setStatus("Saved to this browser · " + cfg.updatedAt);
   }
 
